@@ -4,22 +4,20 @@
 
    `192.168.186.128 bpf1`
 
-   `192.168.186.129 bpf2`
+   `192.168.186.129 bpf2` 
 
-   ![image-20230416215933269](D:\K8S\k8s-network\GitRepo\k8s-network-learning\env-prepare\assets\image-20230416215933269.png) 
+   ![image-20230416232737999](./assets/image-20230416232737999.png) 
 
    ubuntu 20.04 ，内核版本为5.13，ISO镜像下载链接为：
 
    链接：https://pan.baidu.com/s/18KqqHPwNveTk1_QM636SJA   提取码：5233
-   
+    
 
 2. 给节点安装必要的工具
 
    ```shell
    apt install -y net-tools tcpdump  chrony bridge-utils tree wget iftop ethtool curl
    ```
-
-   ![image-20230416174222893](D:\K8S\k8s-network\GitRepo\k8s-network-learning\env-prepare\assets\image-20230416174222893.png) 
 
 3. 关闭swap分区
 
@@ -28,7 +26,7 @@
    swapoff -a
    ```
 
-   ![image-20230416174416968](D:\K8S\k8s-network\GitRepo\k8s-network-learning\env-prepare\assets\image-20230416174416968.png) 
+   
 
 4. 修改内核配置
 
@@ -73,7 +71,7 @@
    systemctl enable docker
    ```
 
-   ![image-20230416180747971](D:\K8S\k8s-network\GitRepo\k8s-network-learning\env-prepare\assets\image-20230416180747971.png) 
+   ![image-20230416232958320](./assets/image-20230416232958320.png) 
 
 7. 由于我的两台机器 hostname 一致，为了避免后续安装k8s引起不必要的麻烦，修改两个机器的hostname，并在master节点 的/etc/host 中配置域名信息
 
