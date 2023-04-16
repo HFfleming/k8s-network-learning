@@ -164,5 +164,7 @@
     sudo chown $(id -u):$(id -g) $HOME/.kube/config
     ```
 
-    
+15. 验证集群是否创建成功
+
+    ![image-20230416232148756](./assets/image-20230416232148756.png) 
 
