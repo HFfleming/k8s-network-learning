@@ -11,8 +11,7 @@
    ubuntu 20.04 ，内核版本为5.13，ISO镜像下载链接为：
 
    链接：https://pan.baidu.com/s/18KqqHPwNveTk1_QM636SJA   提取码：5233
-    
-
+   
 2. 给节点安装必要的工具
 
    ```shell
@@ -73,9 +72,12 @@
 
    ![image-20230416232958320](./assets/image-20230416232958320.png) 
 
-7. 由于我的两台机器 hostname 一致，为了避免后续安装k8s引起不必要的麻烦，修改两个机器的hostname，并在master节点 的/etc/host 中配置域名信息
+7. 由于我的两台机器 hostname 一致，为了避免后续安装k8s引起不必要的麻烦，修改两个机器的hostname，并在所有节点 的/etc/host 中配置域名信息
 
    ```shell
+   #分别给加入到集群的节点 设置hostname
+   hostnamectl set-hostname bpf1
+   #vim /etc/hosts
    192.168.186.128 bpf1
    192.168.186.129 bpf2
    ```
@@ -164,5 +166,48 @@
 
 15. 验证集群是否创建成功
 
-    ![image-20230416232148756](./assets/image-20230416232148756.png) 
+    ![image-20230418224337907](./assets/image-20230418224337907.png)  
 
+16. 部署业务验证集群
+
+    ```yaml
+    #nettool.yaml
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata:
+      name: flannel-udp
+      labels:
+        app: flannel-udp
+    spec:
+      selector:
+        matchLabels:
+          app: flannel-udp
+      template:
+        metadata:
+          labels:
+            app: flannel-udp
+        spec:
+          containers:
+          - name: nettool
+            image: burlyluo/nettool
+            securityContext:
+              privileged: true
+    ---
+    apiversion: v1
+    kind: Service
+    metadata:
+      name: flannel-udp
+    spec:
+      type: NodePort
+      selector: 
+        app: flannel-udp
+      ports:
+      - name: flannel-udp
+        port: 8080
+        targetPort: 80
+        nodePort: 32000
+    ```
+
+    业务正常访问，k8s 集群已就绪
+
+    ![image-20230418224609095](./assets/image-20230418224609095.png) 
