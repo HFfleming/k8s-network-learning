@@ -157,3 +157,56 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
 
    ![image-20230419174325244](./assets/image-20230419174325244.png) 
 
+7. 部署测试业务验证集群
+
+   `kubectl apply -f nettool.yaml`
+
+   ```shell
+   #nettool.yaml
+   apiVersion: apps/v1
+   kind: DaemonSet
+   metadata:
+     name: flannel-udp
+     labels:
+       app: flannel-udp
+   spec:
+     selector:
+       matchLabels:
+         app: flannel-udp
+     template:
+       metadata:
+         labels:
+           app: flannel-udp
+       spec:
+         containers:
+         - name: nettool
+           image: burlyluo/nettool
+           securityContext:
+             privileged: true
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: flannel-udp
+   spec:
+     type: NodePort
+     selector: 
+       app: flannel-udp
+     ports:
+     - name: flannel-udp
+       port: 8080
+       targetPort: 80
+       nodePort: 32000
+   ```
+
+   查看pod 是否部署成功
+
+   `kubectl get po -owide`
+
+   ![image-20230419175721732](./assets/image-20230419175721732.png)
+
+   
+
+   验证测试业务是否正常: 一切ok 
+
+   ![image-20230419180847751](./assets/image-20230419180847751.png)
