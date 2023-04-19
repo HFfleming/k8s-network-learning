@@ -61,7 +61,7 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
 
 
 
-### 三： 安装 kind
+### 三： 安装 kind & kind 创建k8s集群
 
 1.  源编译安装
 
@@ -119,12 +119,11 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
                    echo $i
                    #docker cp ./bridge $i:/opt/cni/bin/
                    docker cp /usr/bin/ping $i:/usr/bin/ping
-                   docker exec -it $i bash -c "sed -i -e 's/jp.archive.ubuntu.com\|archive.ubuntu.com\|security.ubuntu.com/old-releases.ubtunu.com/g' /etc/apt/sources.list"
                    docker exec -it $i bash -c "apt-get -y update > /dev/null && apt-get -y install net-tools tcpdump lrzsz > /dev/null 2>&1"
    done
    
    ```
-
+   
 4. 安装过程如下所示
 
    ![image-20230419000102300](./assets/image-20230419000102300.png) 
@@ -134,4 +133,27 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
 5. 安装完成后，可以执行命令 `kind get clusters`  `kubectl get xxx`查看安装的集群
 
    ![image-20230419000228157](./assets/image-20230419000228157.png) 
+
+
+
+6. 如果安装完集群，`kubectl get po -A` ,pod启动失败
+
+   ![image-20230419173739154](./assets/image-20230419173739154.png) 
+
+   查看异常状态pod日志，发现cni插件相关报错，缺少bridge
+
+   `failed to delegate add: failed to find plugin "bridge" in path [/opt/cni/bin]`
+
+   节点上没有相关cni组件，所以我们可以下载相关plugin，然后docker cp到容器节点内
+
+   ```shell
+   wget https://github.com/containernetworking/plugins/releases/download/v1.1.0/cni-plugins-linux-amd64-v1.2.0.tgz
+   mkdir -p /opt/cni/bin
+   tar -C /opt/cni/bin -xzf cni-plugins-linux-amd64-v1.2.0.tgz
+   for i in $(docker ps -a --format "table {{.Names}}" |grep flannel-udp);do echo $i;docker cp /opt/cni/bin/bridge $i:/opt/cni/bin/;done
+   ```
+
+   然后查看集群信息,一切正常
+
+   ![image-20230419174325244](./assets/image-20230419174325244.png) 
 
