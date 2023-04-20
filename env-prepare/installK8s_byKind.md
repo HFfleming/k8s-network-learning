@@ -8,15 +8,35 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
 
 ### 二:  环境准备
 
-1.  准备一台机器2u4g 即可
+1. 准备一台机器2u4g 即可, 安装一些必要的工具
 
-2.  机器上安装docker
+   `apt install -y net-tools tcpdump  chrony bridge-utils tree wget iftop ethtool curl`
+
+2. 机器上安装docker
+
+   注意：不要在没有配置 Docker APT 源的情况下直接使用 apt 命令安装 Docker
 
    ```shell
-   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-   sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-   sudo apt update
-   sudo apt install docker-ce docker-ce-cli containerd.io
+   #卸载老版本docker(如果之前有安装)
+   sudo apt-get remove docker docker-engine docker.io containerd runc
+   #由于 apt 源使用 HTTPS 以确保软件下载过程中不被篡改。因此，我们首先需要添加使用 HTTPS 传输的软件包以及 CA 证书。
+   sudo apt-get update
+   sudo apt-get install \
+       ca-certificates \
+       curl \
+       gnupg \
+       lsb-release
+   # 使用阿里源进行安装
+   curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+   #docker 官方源: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+   echo \
+     "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://mirrors.aliyun.com/docker-ce/linux/ubuntu \
+     $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+   # 更新apt 源，安装docker
+   sudo apt-get update
+   sudo apt-get install docker-ce docker-ce-cli containerd.io
+   
+   #配置镜像加速
    mkdir -p /etc/docker
    cat <<EOF > /etc/docker/daemon.json
    {
@@ -26,6 +46,7 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
    systemctl daemon-reload
    systemctl restart docker
    systemctl enable docker
+   
    ```
 
 3. 机器上安装kubectl
@@ -147,7 +168,7 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
    节点上没有相关cni组件，所以我们可以下载相关plugin，然后docker cp到容器节点内
 
    ```shell
-   wget https://github.com/containernetworking/plugins/releases/download/v1.1.0/cni-plugins-linux-amd64-v1.2.0.tgz
+   wget https://github.com/containernetworking/plugins/releases/download/v1.2.0/cni-plugins-linux-amd64-v1.2.0.tgz
    mkdir -p /opt/cni/bin
    tar -C /opt/cni/bin -xzf cni-plugins-linux-amd64-v1.2.0.tgz
    for i in $(docker ps -a --format "table {{.Names}}" |grep flannel-udp);do echo $i;docker cp /opt/cni/bin/bridge $i:/opt/cni/bin/;done
