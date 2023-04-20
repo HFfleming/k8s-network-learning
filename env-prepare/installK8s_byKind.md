@@ -53,6 +53,7 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
 
    ```bash
    curl -LO https://dl.k8s.io/release/1.23.4/bin/linux/amd64/kubectl
+   
    sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
    kubectl version --client
    ```
