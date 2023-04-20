@@ -16,3 +16,9 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 2. 如何使用kind 搭建kubernetes 集群
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/env-prepare/installK8s_byKind.md
+
+   
+
+3. 如何搭建私人镜像仓库
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/env-prepare/how-to-setup-private-repo.md
