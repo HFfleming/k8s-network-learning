@@ -52,10 +52,21 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
 3. 机器上安装kubectl
 
    ```bash
-   curl -LO https://dl.k8s.io/release/1.23.4/bin/linux/amd64/kubectl
+   #添加源， 更新缓存索引
+   apt update && apt install -y apt-transport-https
+   # 添加访问公钥
+   curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add - 
+   # 添加源
+   cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+   deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
+   EOF
+   #更新缓存索引
+   apt update
+   #进行安装
+   apt-cache madison kubectl #查询特定版本
+   version=1.23.4-00
+   apt-get install kubectl=${version}
    
-   sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-   kubectl version --client
    ```
 
 4. 机器上安装golang运行环境
