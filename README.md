@@ -28,3 +28,13 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 4. 如何使用containerLab构建网络拓扑
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/env-prepare/install_containerLab.md
+   
+   
+
+---
+
+### 二： 网络基础篇
+
+1. 如何使用veth pair
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/network-basic/understand-vethpair.md
