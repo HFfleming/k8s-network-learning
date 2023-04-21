@@ -22,3 +22,9 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 3. 如何搭建私人镜像仓库
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/env-prepare/how-to-setup-private-repo.md
+   
+   
+
+4. 如何使用containerLab构建网络拓扑
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/env-prepare/install_containerLab.md
