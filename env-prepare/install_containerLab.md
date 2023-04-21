@@ -30,18 +30,18 @@ Containerlab根据用户传递给它的拓扑信息来建立实验,构建网络�
      nodes:
        server1:
          kind: linux
-         image: burlyluo/nettool
+         image: 192.168.186.131:5000/nettool
          exec:
          - ip addr add 10.1.5.10/24 dev net0
          
        server2:
          kind: linux
-         image: burlyluo/nettool
+         image: 192.168.186.131:5000/nettool
          exec:
          - ip addr add 10.1.5.11/24 dev net0
          
-       links:
-         - endpoints: ["server1:net0","server2:net0"]
+     links:
+       - endpoints: ["server1:net0","server2:net0"]
    EOF
    ```
 

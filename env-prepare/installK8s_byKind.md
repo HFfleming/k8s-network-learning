@@ -213,7 +213,7 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
        spec:
          containers:
          - name: nettool
-           image: burlyluo/nettool
+           image: 192.168.186.131:5000/nettool:latest
            securityContext:
              privileged: true
    ---
