@@ -126,7 +126,7 @@
 
    `docker cp clab-routing-gw0:/opt/vyatta/etc/config/config.boot .`
 
-   ```json
+   ```bash
    interfaces {
        ethernet eth1 {
        	address 10.1.5.1/24  

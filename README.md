@@ -35,6 +35,12 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 
 ### 二： 网络基础篇
 
+1. 理解网络中报文的传输，以及抓包技巧。熟悉路由过程中源/目的IP MAC地址的变化
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/network-basic/IPandMAC.md
+   
+   
+   
 1. 如何使用veth pair
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/network-basic/understand-vethpair.md
