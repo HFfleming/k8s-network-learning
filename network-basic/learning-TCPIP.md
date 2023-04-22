@@ -20,5 +20,8 @@
 
    ![image-20230422135459732](./assets/image-20230422135459732.png) 
 
-   <img src="./assets/image-20230422143339349.png" alt="image-20230422143339349" style="zoom:33%;" /> 
+   <img src="./assets/image-20230422143339349.png" alt="image-20230422143339349" style="zoom: 50%;" /> 
 
+6. 当打开个包文件后，可以通过Stream index进行筛选，从而找到对应的上下文
+
+   ![image-20230422164429828](./assets/image-20230422164429828.png) 
