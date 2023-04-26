@@ -184,6 +184,8 @@ spec:
 
 5. 结论
 
+   ![image-20230426094826188](./assets/image-20230426094826188.png) 
+
    cilium 在回ARP reply包的时候，将veth pair中的 MAC 作为目标地址回过来了(即 root ns 中的 lxc-nic-mac)，而非网关MAC
 
    正常流程： pod 发出报文 >> 期望去往的地址是(第一跳地址)`10.0.1.83/32`,期望解析的mac地址也是该网卡的mac地址
@@ -191,7 +193,7 @@ spec:
    但是回包的确是 `ROOT ns  lxc MAC`,
 
    这说明了 这个流程中 数据包packet被某种逻辑劫持了，**这种劫持在cilium中就是通过ebpf 来实现的**（ebpf Hook）
-
+   
    
 
 

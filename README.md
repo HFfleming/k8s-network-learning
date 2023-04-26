@@ -44,3 +44,15 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 1. 如何使用veth pair
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/network-basic/understand-vethpair.md
+
+
+
+---
+
+### 三：cilium cni篇
+
+1. Cilium Native Routing Mod with kube-proxy 的搭建以及工作模式
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/Native-Routing-with-kubeProxy.md
+
+   
