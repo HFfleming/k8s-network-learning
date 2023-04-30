@@ -6,6 +6,8 @@ Containerlab根据用户传递给它的拓扑信息来建立实验,构建网络�
 
 在后面的学习中，我们可以利用containerLab 实现交换机，路由器等功能，或者模仿cni来实现不同网络命名空间下的容器网络互通，加深对cni的理解
 
+**注意：ubuntu22.04 可能会和clab 不适配，尽量使用的ubuntu20.04**
+
 
 
 ### 二： 部署安装containerLab
