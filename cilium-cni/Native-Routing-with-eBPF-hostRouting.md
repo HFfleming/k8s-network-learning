@@ -163,23 +163,23 @@ cilium 高级模式，高级特性全部开启，推荐学习使用此种模式
 
 3.  源pod 上 eth0网卡上进行 抓包
 
-   `kubectl exec -it cni -- tcpdump -pne -i eth0`
+   	`kubectl exec -it cni -- tcpdump -pne -i eth0`
 
-   ![image-20230502002318618](./assets/image-20230502002318618.png)  
+   	![image-20230502002318618](./assets/image-20230502002318618.png)  
 
-   现象： 在pod内可以看到request 和reply 信息。 ICMP reply 数据包没有通过宿主机的lxc 网卡回来。感觉就像目标pod直接reply 给源pod一样
+   	现象： 在pod内可以看到request 和reply 信息。 ICMP reply 数据包没有通过宿主机的lxc 网卡回来。感觉就像目标pod直接reply 给源pod一样
 
-   **其实这就是通过 bpf_redirect_peer helper 函数实现的，cilium 在lxc 网卡上挂了一个 tc hook，然后调用bpf_redirect_peer 函数, 跳到pod内的eth0网卡**
+   	**其实这就是通过 bpf_redirect_peer helper 函数实现的，cilium 在lxc 网卡上挂了一个 tc hook，然后调用bpf_redirect_peer 函数, 跳到pod内的eth0网卡**
 
-   (当节点内核 kernel >= 5.10  则 tc hook 调用的是bpf_redirect_peer 函数; 当节点内核 kernel < 5.10 则 tc hook 调用的是 bpf_redirect() )
+   	(当节点内核 kernel >= 5.10  则 tc hook 调用的是bpf_redirect_peer 函数; 当节点内核 kernel < 5.10 则 tc hook 调用的是 bpf_redirect() )
 
-   可参考 该图
+   	可参考 该图
 
-   ![image-20230502003945334](./assets/image-20230502003945334.png) 
+   	![image-20230502003945334](./assets/image-20230502003945334.png) 
 
-   **pod1 和pod2 的lxc 网卡，都只能收到ICMP 数据包信息的一半**
+   	**pod1 和pod2 的lxc 网卡，都只能收到ICMP 数据包信息的一半**
 
-   (pod1 lxc 网卡发数据包信息 不发给 pod2 的lxc网卡，那pod2 也用同样的态度对待pod1  )
+   	(pod1 lxc 网卡发数据包信息 不发给 pod2 的lxc网卡，那pod2 也用同样的态度对待pod1  )
 
 
 
@@ -207,17 +207,17 @@ cilium 高级模式，高级特性全部开启，推荐学习使用此种模式
 
 2.  cilium-kubeproxy-replacement-ebpf-worker   节点进行抓包分析
 
-   ![image-20230502010106519](./assets/image-20230502010106519.png) 
+   	![image-20230502010106519](./assets/image-20230502010106519.png) 
 
-   首先对 物理网卡 eth0  进行抓包 `tcpdump -pne -i eth0 icmp`： 可以发现 数据包的request reply 信息，这是没有问题的，ebpf的跳转是在 lxc网卡进行的
+   	首先对 物理网卡 eth0  进行抓包 `tcpdump -pne -i eth0 icmp`： 可以发现 数据包的request reply 信息，这是没有问题的，ebpf的跳转是在 lxc网卡进行的
 
-   ![image-20230502010423521](./assets/image-20230502010423521.png)
+   	![image-20230502010423521](./assets/image-20230502010423521.png)
 
-   对虚拟网卡 `lxc640f2379edd7` 进行抓包: `tcpdump -pne -i lxc640f2379edd7 icmp` : 可以发现 只有request 的数据包信息，tc hook 调用bpf_redirect_peer 函数直接将reply 数据包传递给pod内的eth0 网卡了
+   	对虚拟网卡 `lxc640f2379edd7` 进行抓包: `tcpdump -pne -i lxc640f2379edd7 icmp` : 可以发现 只有request 的数据包信息，tc hook 调用bpf_redirect_peer 函数直接将reply 数据包传递给pod内的eth0 网卡了
 
-   ![image-20230502010910964](./assets/image-20230502010910964.png)
+   	![image-20230502010910964](./assets/image-20230502010910964.png)
 
-   ![image-20230502011839218](./assets/image-20230502011839218.png) 
+   	![image-20230502011839218](./assets/image-20230502011839218.png) 
 
 3. cilium-kubeproxy-replacement-ebpf-worker2  节点抓包分析
 
@@ -267,11 +267,11 @@ eBPF Host Routing 允许pod 数据包绕过host namespace的所有iptables和上
 
 1.  容器内访问 nodeport  svc
 
-   ![image-20230502020215374](./assets/image-20230502020215374.png)
+   	![image-20230502020215374](./assets/image-20230502020215374.png)
 
 2.  对容器的eth0 进行抓包
 
-   ![image-20230502020139269](./assets/image-20230502020139269.png) 
+   	![image-20230502020139269](./assets/image-20230502020139269.png) 
 
    对抓包数据进行分析: 三次握手阶段，就可以看到目的地址 已经是 后端pod ip加端口了，并不是所谓的nodeip 和32000端口，没有经过宿主机 ns跳转。
 
