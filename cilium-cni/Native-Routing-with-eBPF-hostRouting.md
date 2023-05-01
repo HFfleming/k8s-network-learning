@@ -12,7 +12,8 @@ cilium 高级模式，高级特性全部开启，推荐学习使用此种模式
 
 4. TC from-netdev
 
-   
+  
+  
 
 ### 二： 环境准备
 
@@ -125,7 +126,8 @@ cilium 高级模式，高级特性全部开启，推荐学习使用此种模式
 
    ![image-20230502000334927](./assets/image-20230502000334927.png) 
 
-
+  
+  
 
 ### 三 ： 同节点pod 通信如何实现的
 
@@ -181,7 +183,8 @@ cilium 高级模式，高级特性全部开启，推荐学习使用此种模式
 
    	(pod1 lxc 网卡发数据包信息 不发给 pod2 的lxc网卡，那pod2 也用同样的态度对待pod1  )
 
-
+  
+  
 
 ### 四： 跨节点pod通信如何实现的
 
@@ -235,7 +238,8 @@ cilium 高级模式，高级特性全部开启，推荐学习使用此种模式
 
    ![image-20230502012608387](./assets/image-20230502012608387.png)
 
-
+  
+  
 
 ### 五： eBPF  Host-Routing
 
@@ -260,7 +264,8 @@ cilium 高级模式，高级特性全部开启，推荐学习使用此种模式
 eBPF Host Routing 允许pod 数据包绕过host namespace的所有iptables和上层堆栈的开销，以及通过veth pair时的一些上下文切换开销
 
 
-
+  
+  
 ### 六 ：补充： ebpf  host routing在 service 场景下如何运行的
 
 大概原理是在 pod 内的 eth0 网关上 挂了一个tc hook ，然后根据bpf map 返回对应的后端ip加端口。不同于kube-proxy 的 iptable 只能在 3层或者4层进行操作，cilium host routing可以实现一个7层的治理。
@@ -273,7 +278,7 @@ eBPF Host Routing 允许pod 数据包绕过host namespace的所有iptables和上
 
    	![image-20230502020139269](./assets/image-20230502020139269.png) 
 
-   对抓包数据进行分析: 三次握手阶段，就可以看到目的地址 已经是 后端pod ip加端口了，并不是所谓的nodeip 和32000端口，没有经过宿主机 ns跳转。
+   	对抓包数据进行分析: 三次握手阶段，就可以看到目的地址 已经是 后端pod ip加端口了，并不是所谓的nodeip 和32000端口，没有经过宿主机 ns跳转。
 
    
 
