@@ -248,7 +248,9 @@ spec:
 
 2.  抓包验证，抓包位置为 源pod 网卡eth0对应 的 vethpair，也即 cilium-kubeproxy-worker2 节点上的 lxcb4639bfc3ecd 网卡
 
-   `tcpdump -pne -i lxcb4639bfc3ecd	` ![image-20230501222458430](./assets/image-20230501222458430.png) 
+   `tcpdump -pne -i lxcb4639bfc3ecd	` 
+   
+   ![image-20230501222458430](./assets/image-20230501222458430.png) 
    
    ​	**源ip 和目的ip 都没有变化**
    
