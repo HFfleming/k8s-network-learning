@@ -51,7 +51,7 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 
 ### 三：cilium cni篇
 
-1. cilium 介绍，以及cilium的三种方式。（必须掌握）
+1. cilium 介绍，以及cilium安装的三种方式。（必须掌握）
 
      https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/how-to-install-cilium.md
 
