@@ -50,6 +50,16 @@ helm repo update > /dev/null  2>&1
 
 #Direct Routing Options(--set tunnel=disabled --set autoDirectNodeRoutes=true --set ipv4NativeRoutingCIDR="10.0.0.0/8")
 helm  install cilium  cilium/cilium --set k8sServiceHost=$controller_node --set k8sServicePort=6443 --version 1.13.0-rc5 --namespace kube-system --set dubug.enabled=true --set dubug.verbose=datapath --set monitorAggregation=none --set ipam.mode=cluster-pool --set cluster.name=cilium-kubeproxy --set tunnel=disabled --set autoDirectNodeRoutes=true --set ipv4NativeRoutingCIDR="10.0.0.0/8"
+
+#4. install necessary tools
+for i in $(docker ps -a --format "table {{.Names}}" |grep cilium-kubeproxy)
+do
+                echo $i
+                #docker cp ./bridge $i:/opt/cni/bin/
+                docker cp /usr/bin/ping $i:/usr/bin/ping
+                docker exec -it $i bash -c "sed -i -e  's/jp.archive.ubuntu.com\|archive.ubuntu.com\|security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list"
+                docker exec -it $i bash -c "apt-get -y update > /dev/null && apt-get -y install net-tools tcpdump lrzsz > /dev/null 2>&1"
+done
 ```
 
 **集群创建成功**![image-20230425225643660](./assets/image-20230425225643660.png) 
@@ -114,7 +124,7 @@ spec:
 
 
 
-#### 四： 解析cilium kubeproxy 模式下**同节点pod**是如何通信的
+### 四： 解析cilium kubeproxy 模式下**同节点pod**是如何通信的
 
 ![image-20230425234001035](./assets/image-20230425234001035.png) 
 
@@ -195,6 +205,64 @@ spec:
    这说明了 这个流程中 数据包packet被某种逻辑劫持了，**这种劫持在cilium中就是通过ebpf 来实现的**（ebpf Hook）
    
    
+   
+   
+
+### 五： 解析cilium kubeproxy 模式下**跨节点pod**是如何通信的
+
+![image-20230501214444810](./assets/image-20230501214444810.png) 
+
+**源pod**  :       podIP :10.0.2.145    MAC: c6:c2:1b:2a:a8:95    宿主节点: cilium-kubeproxy-worker2
+
+源pod 对应的网卡信息：
+
+![image-20230501215401360](./assets/image-20230501215401360.png)  
+
+宿主节点对应的网卡信息：
+
+![image-20230501215521824](./assets/image-20230501215521824.png) 
+
+
+
+**目标pod** ：  podIP: 10.0.1.18       MAC: 2a:a2:99:69:44:71   宿主节点：cilium-kubeproxy-worker
+
+目标pod对应的网卡信息：
+
+![image-20230501215645939](./assets/image-20230501215645939.png) 
+
+宿主节点对应的网卡信息：
+
+![image-20230501215745654](./assets/image-20230501215745654.png) 
+
+
+
+1. 进行ping 测 (**10.0.2.145**  ping  **10.0.1.18**)
+
+   `kubectl exec -it cni -- ping 10.0.1.18`
+
+   ![image-20230501222333088](./assets/image-20230501222333088.png) 
+
+   
+
+2.  抓包验证，抓包位置为 源pod 网卡eth0对应 的 vethpair，也即 cilium-kubeproxy-worker2 节点上的 lxcb4639bfc3ecd 网卡
+
+   `tcpdump -pne -i lxcb4639bfc3ecd `
+   
+   ![image-20230501222458430](./assets/image-20230501222458430.png) 
+   
+   **源ip 和目的ip 都没有变化**
+   
+   **源mac 为pod eth0 的mac地址**
+   
+   **目的mac 为 宿主节点上的lxcb4639bfc3ecd 网卡 对应的mac地址**
+   
+   
+   
+3. 抓包验证，抓包位置为目标pod 网卡eth0对应 的 vethpair，也即 cilium-kubeproxy-worker 节点上的 lxc370217a44cfe 网卡
+
+   ![image-20230501222524361](./assets/image-20230501222524361.png) 
+
+
 
 
 

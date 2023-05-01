@@ -87,6 +87,16 @@ cilium 的各种高级特性需要依赖于linux 内核版本。本试验均采�
    
    #Direct Routing Options(--set tunnel=disabled --set autoDirectNodeRoutes=true --set ipv4NativeRoutingCIDR="10.0.0.0/8")
    helm  install cilium  cilium/cilium --set k8sServiceHost=$controller_node --set k8sServicePort=6443 --version 1.13.0-rc5 --namespace kube-system --set dubug.enabled=true --set dubug.verbose=datapath --set monitorAggregation=none --set ipam.mode=cluster-pool --set cluster.name=cilium-kubeproxy --set tunnel=disabled --set autoDirectNodeRoutes=true --set ipv4NativeRoutingCIDR="10.0.0.0/8"
+   
+   #4. install necessary tools
+   for i in $(docker ps -a --format "table {{.Names}}" |grep cilium-kubeproxy)
+   do
+                   echo $i
+                   #docker cp ./bridge $i:/opt/cni/bin/
+                   docker cp /usr/bin/ping $i:/usr/bin/ping
+                   docker exec -it $i bash -c "sed -i -e  's/jp.archive.ubuntu.com\|archive.ubuntu.com\|security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list"
+                   docker exec -it $i bash -c "apt-get -y update > /dev/null && apt-get -y install net-tools tcpdump lrzsz > /dev/null 2>&1"
+   done
    ```
 
    需要注意的地方：
@@ -210,6 +220,16 @@ cilium 的各种高级特性需要依赖于linux 内核版本。本试验均采�
    
    #Direct Routing Options(--set kubeProxyReplacement=strict --set tunnel=disabled --set autoDirectNodeRoutes=true --set ipv4NativeRoutingCIDR="10.0.0.0/8")
    helm  install cilium  cilium/cilium --set k8sServiceHost=$controller_node --set k8sServicePort=6443 --version 1.13.0-rc5 --namespace kube-system --set dubug.enabled=true --set dubug.verbose=datapath --set monitorAggregation=none --set ipam.mode=cluster-pool --set cluster.name=cilium-kubeproxy-replacement --set kubeProxyReplacement=strict --set tunnel=disabled --set autoDirectNodeRoutes=true --set ipv4NativeRoutingCIDR="10.0.0.0/8"
+   
+   #4. install necessary tools
+   for i in $(docker ps -a --format "table {{.Names}}" |grep cilium-kubeproxy-replacement)
+   do
+                   echo $i
+                   #docker cp ./bridge $i:/opt/cni/bin/
+                   docker cp /usr/bin/ping $i:/usr/bin/ping
+                   docker exec -it $i bash -c "sed -i -e  's/jp.archive.ubuntu.com\|archive.ubuntu.com\|security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list"
+                   docker exec -it $i bash -c "apt-get -y update > /dev/null && apt-get -y install net-tools tcpdump lrzsz > /dev/null 2>&1"
+   done
    ```
 
    主要注意的地方：
@@ -276,7 +296,7 @@ cilium 的各种高级特性需要依赖于linux 内核版本。本试验均采�
 
 1. 准备安装脚本: `1-setup-env.sh`
 
-   ```yaml
+   ```shell
    #1-setup-env.sh
    #! /bin/bash
    date
@@ -313,6 +333,16 @@ cilium 的各种高级特性需要依赖于linux 内核版本。本试验均采�
    
    #Direct Routing Options(--set kubeProxyReplacement=strict --set tunnel=disabled --set autoDirectNodeRoutes=true --set ipv4NativeRoutingCIDR="10.0.0.0/8" --set bpf.masquerade=true)
    helm  install cilium  cilium/cilium --set k8sServiceHost=$controller_node --set k8sServicePort=6443 --version 1.13.0-rc5 --namespace kube-system --set dubug.enabled=true --set dubug.verbose=datapath --set monitorAggregation=none --set ipam.mode=cluster-pool --set cluster.name=cilium-kubeproxy-replacement-ebpf --set kubeProxyReplacement=strict --set tunnel=disabled --set autoDirectNodeRoutes=true --set ipv4NativeRoutingCIDR="10.0.0.0/8" --set bpf.masquerade=true
+   
+   #4. install necessary tools
+   for i in $(docker ps -a --format "table {{.Names}}" |grep cilium-kubeproxy-replacement-ebpf)
+   do
+                   echo $i
+                   #docker cp ./bridge $i:/opt/cni/bin/
+                   docker cp /usr/bin/ping $i:/usr/bin/ping
+                   docker exec -it $i bash -c "sed -i -e  's/jp.archive.ubuntu.com\|archive.ubuntu.com\|security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list"
+                   docker exec -it $i bash -c "apt-get -y update > /dev/null && apt-get -y install net-tools tcpdump lrzsz > /dev/null 2>&1"
+   done
    ```
 
    需要注意的是:

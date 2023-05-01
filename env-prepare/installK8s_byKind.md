@@ -152,6 +152,7 @@ kind 是 Kubernetes in Docker 的简写，是一个使用 Docker 容器作为 No
                    echo $i
                    #docker cp ./bridge $i:/opt/cni/bin/
                    docker cp /usr/bin/ping $i:/usr/bin/ping
+                   docker exec -it $i bash -c "sed -i -e  's/jp.archive.ubuntu.com\|archive.ubuntu.com\|security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list"
                    docker exec -it $i bash -c "apt-get -y update > /dev/null && apt-get -y install net-tools tcpdump lrzsz > /dev/null 2>&1"
    done
    
