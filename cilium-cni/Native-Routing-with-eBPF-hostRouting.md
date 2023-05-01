@@ -113,9 +113,7 @@ cilium 高级模式，高级特性全部开启，推荐学习使用此种模式
 
 3.  手动启动一个pod
 
-   `kubectl run cni --image=192.168.186.131:5000/nettool`
-
-   
+   ​	`kubectl run cni --image=192.168.186.131:5000/nettool`
 
 4. 确认环境是否就绪
 
