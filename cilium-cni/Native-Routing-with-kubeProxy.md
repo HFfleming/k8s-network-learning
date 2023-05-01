@@ -207,6 +207,8 @@ spec:
    
    
    
+   
+   
 
 ### 五： 解析cilium kubeproxy 模式下**跨节点pod**是如何通信的
 
@@ -246,15 +248,13 @@ spec:
 
 2.  抓包验证，抓包位置为 源pod 网卡eth0对应 的 vethpair，也即 cilium-kubeproxy-worker2 节点上的 lxcb4639bfc3ecd 网卡
 
-   `tcpdump -pne -i lxcb4639bfc3ecd `
+   `tcpdump -pne -i lxcb4639bfc3ecd	` ![image-20230501222458430](./assets/image-20230501222458430.png) 
    
-   ![image-20230501222458430](./assets/image-20230501222458430.png) 
+   ​	**源ip 和目的ip 都没有变化**
    
-   **源ip 和目的ip 都没有变化**
+   ​	**源mac 为pod eth0 的mac地址**
    
-   **源mac 为pod eth0 的mac地址**
-   
-   **目的mac 为 宿主节点上的lxcb4639bfc3ecd 网卡 对应的mac地址**
+   ​	**目的mac 为 宿主节点上的lxcb4639bfc3ecd 网卡 对应的mac地址**
    
    
    
