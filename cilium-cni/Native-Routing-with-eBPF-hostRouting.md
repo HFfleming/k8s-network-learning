@@ -112,7 +112,9 @@ cilium 高级模式，高级特性全部开启，推荐学习使用此种模式
        nodePort: 32000
    ```
 
-3.  手动启动一个pod
+   
+
+3. 手动启动一个pod
 
    `kubectl run cni --image=192.168.186.131:5000/nettool`
 
