@@ -167,35 +167,29 @@ spec:
 
    
 
-4.  wireshark 分析数据包
+4. wireshark 分析数据包
 
    eth0_cilium_vxlan.cap ：找到8472端口的数据包，然后decode, 选择vxlan，即可得到如下所示：
 
-   ![image-20230503002639055](./assets/image-20230503002639055.png) 
+   ![image-20230503002639055](./assets/image-20230503002639055.png)
 
    request和reply 请求数据包的vni：3101
 
    ![image-20230503002936363](./assets/image-20230503002936363.png)
 
-   
-
    eth0_cni.cap：找到8472端口的数据包，然后decode, 选择vxlan，即可得到如下所示：
 
    ![image-20230503004910152](./assets/image-20230503004910152.png) 
 
-   查看vni： 
+   查看vni：  `request 数据包对应的vni： 8287` ||  `reply 数据包对应的vni：3101`   这就是cilium 特殊的地方，request/reply 对应的vni 不一样，在其他的cni中，vni是保持不变的。
 
-    `request 数据包对应的vni： 8287` ||  `reply 数据包对应的vni：3101`   这就是cilium 特殊的地方，request/reply 对应的vni 不一样，在其他的cni中，vni是保持不变的。
+   但是在cilium 视图下，每类pod 都有一个id。可以根据这个id 定制各种控制策略，例如访问权限的控制。
 
-   在cilium 视图下，每类pod 都有一个id。可以根据这个id 定制各种控制策略，例如访问权限的控制。
-
-   ![image-20230503003709033](./assets/image-20230503003709033.png)  
+   ![image-20230503003709033](./assets/image-20230503003709033.png) 
 
    上述 vni 针对的是服务级别的分类，如果需要精确到pod粒度，则可以使用 ` cilium endpoint list`  ,使用endpoint 进行区分
 
    ![image-20230503005708603](./assets/image-20230503005708603.png) 
-
-   
 
    回到这个报文:  弄清mac地址的匹配关系
 
@@ -209,21 +203,17 @@ spec:
 
    ![image-20230503010709584](./assets/image-20230503010709584.png) 
 
-   
-
    目的MAC：`66:71:de:64:ab:cd  对应源pod所在宿主机的 lxcfc188afe3921 网卡,也就是 源pod eth0 的veth pair` 
 
    ？ 为什么目的MAC 是源pod的vethpair lxc 网卡的mac地址啊？
 
    (cilium_vxlan 接口没有ip地址，不依赖ip地址去学习下一跳的mac地址，所以只能把原本数据包的mac地址拿过来，和其他cni有差别)
 
-   
-
    ![image-20230503013532406](./assets/image-20230503013532406.png) 
 
    
 
-     
+   
 
 ### 四： 节点lxc 网卡抓包
 

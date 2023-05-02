@@ -69,6 +69,10 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 
       https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/Native-Routing-with-eBPF-hostRouting.md
 
+4. Cilium VxLan with eBPF Host Routing 工作模式分析
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/Cilium-VxLAN-with-eBPF-hostRouting.md
+
    
 
 
