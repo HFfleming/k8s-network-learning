@@ -44,6 +44,12 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 1. 如何使用veth pair
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/network-basic/understand-vethpair.md
+   
+   
+
+3. 理解vxlan组网模式，并通过containerLab 搭建vxlan网络拓扑加深理解
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/network-basic/setup-vxlan-env-byContainerLab.md
 
 
 
@@ -54,14 +60,14 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 1. Cilium 介绍，以及cilium安装的三种方式。（必须掌握）
 
     https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/how-to-install-cilium.md
-     
+    
      
 
 2. Cilium Native Routing with kube-proxy 的搭建以及工作模式
 
      https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/Native-Routing-with-kubeProxy.md
-    
-    
+
+​    
 
 3.  Cilium Native Routing with eBPF Host Routing 工作模式介绍
 

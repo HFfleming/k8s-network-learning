@@ -70,7 +70,7 @@ https://support.huawei.com/enterprise/zh/doc/EDOC1100087027
 
     `gw0 .cfg  `
    
-   ```json
+   ```
    interfaces {
        ethernet eth1 {
        	address 10.1.5.1/24  
@@ -149,7 +149,7 @@ https://support.huawei.com/enterprise/zh/doc/EDOC1100087027
    
    `gw1.cfg`
    
-   ```json
+   ```
    interfaces {
        ethernet eth1 {
        	address 10.1.8.1/24  
