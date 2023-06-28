@@ -73,9 +73,6 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/Cilium-VxLAN-with-eBPF-hostRouting.md
 
-   
+5. Cilium IPSec 环境搭建以及工作模式分析
 
-
-
-
-
+   https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/IPSec/Cilium-IPSec-DataPath.md
