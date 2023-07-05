@@ -18,7 +18,7 @@
    apiVersion: kind.x-k8s.io/v1alpha4
    networking:
      disableDefaultCNI: true  #kind 默认使用rancher cni，我们不需要该cni
-     #kubeProxyMode: "node" #Enable the kubeProxy
+     #kubeProxyMode: "none" #Enable the kubeProxy
      
    nodes:
      - role: control-plane
