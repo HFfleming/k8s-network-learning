@@ -84,3 +84,7 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 7. Cilium Socket LB 环境搭建以及特性分析
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/socketLB/Cilium-SocketLB.md
+
+8. Cilium DSR 环境搭建以及特性分析
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/DSR/Cilium-DSR.md
