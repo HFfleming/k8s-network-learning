@@ -2,7 +2,7 @@
 
 传统模式下：
 
-![Without DSR (SNAT)](https://cilium.io/static/ddc4cd7b45e012ff15f400313c5a8042/832a9/dsr-without.png)
+<img src="https://cilium.io/static/ddc4cd7b45e012ff15f400313c5a8042/832a9/dsr-without.png" alt="Without DSR (SNAT)" style="zoom:33%;" /> 
 
 外部流量通过 NodePort、ExternalIPs 或 LoadBalancer 访问 Kubernetes 服务，当backend pod运行在与请求发送到的节点不同的节点上时，Kubernetes 工作节点可能会将请求重定向到远程节点。
 
@@ -12,7 +12,7 @@
 
 Cilium Direct server return(DSR)模式：
 
-![With DSR](https://cilium.io/static/b4488d749f6e74376e90dcff34c1ab6b/832a9/dsr-with.png)
+<img src="https://cilium.io/static/b4488d749f6e74376e90dcff34c1ab6b/832a9/dsr-with.png" alt="With DSR" style="zoom:33%;" /> 
 
 虽然Kubernetes 提供了 externalTrafficPolicy=Local，如果接收请求的节点不运行任何后端pod，它会通过删除对服务的请求来保留客户端源 IP 地址（访问失败）。然而，这也会使负载均衡的实现变得更加复杂，并可能导致负载均衡失效。
 
