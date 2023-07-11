@@ -92,3 +92,7 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 9. Cilium DualStack 环境搭建以及特性分析
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/DualStack/Cilium-DualStack.md
+
+10. Cilium LB IPAM 环境搭建以及功能验证
+
+    https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/LB-IPAM/Cilium-LB-IPAM.md
