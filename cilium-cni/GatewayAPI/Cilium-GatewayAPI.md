@@ -51,6 +51,7 @@ https://isovalent.com/blog/post/cilium-release-113/
                    docker cp /usr/bin/ping $i:/usr/bin/ping
                    docker exec -it $i bash -c "sed -i -e  's/jp.archive.ubuntu.com\|archive.ubuntu.com\|security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list"
                    docker exec -it $i bash -c "apt-get -y update > /dev/null && apt-get -y install net-tools tcpdump lrzsz > /dev/null 2>&1"
+   done
    ```
 
    注意: `kubeProxyMode: "none"` cilium gatewayapi 特性不需要集群安装kube-proxy
