@@ -95,8 +95,12 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 
 10. Cilium LB IPAM 环境搭建以及功能验证
 
-    https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/LB-IPAM/Cilium-LB-IPAM.md
+      https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/LB-IPAM/Cilium-LB-IPAM.md
 
 11. Cilium Ingress特性 环境搭建以及功能验证
 
-    https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/Ingress/Cilium-Ingress.md
+       https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/Ingress/Cilium-Ingress.md
+
+12. Cilium GatewayAPI特性 环境搭建以及功能验证
+
+       https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/GatewayAPI/Cilium-GatewayAPI.md
