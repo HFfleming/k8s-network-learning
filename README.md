@@ -50,8 +50,12 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 3. 理解vxlan组网模式，并通过containerLab 搭建vxlan网络拓扑加深理解
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/network-basic/setup-vxlan-env-byContainerLab.md
+   
+   
 
+4. BGP相关知识介绍
 
+   https://github.com/HFfleming/k8s-network-learning/blob/main/network-basic/About-BGP.md
 
 ---
 
