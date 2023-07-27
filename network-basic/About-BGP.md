@@ -83,6 +83,8 @@ RR在接收BGP路由时:
 
 3. 如果路由学习自EBGP对等体，则发送给所有Client和非Client IBGP对等体。
 
+---
+
 
 
 ### 六: BGP RR Mechanism

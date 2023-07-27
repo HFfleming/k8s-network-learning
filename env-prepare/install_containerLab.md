@@ -12,10 +12,14 @@ Containerlab根据用户传递给它的拓扑信息来建立实验,构建网络�
 
 ### 二： 部署安装containerLab
 
-1. Containerlab 快速安装，最好使用该版本0.30.0，后续版本yaml写法有变动<img src="./assets/image-20230420191521805.png" alt="image-20230420191521805" style="zoom:33%;" />  
+1. Containerlab 快速安装，最好使用该版本0.30.0，后续版本yaml写法有变动
 
+   `sudo bash -c "$(curl -sL https://get.containerlab.dev)" -- -v 0.30.0`
+
+   <img src="./assets/image-20230420191521805.png" alt="image-20230420191521805" style="zoom:33%;" />  
+   
    执行命令`clab version`,确认安装完成
-
+   
    <img src="./assets/image-20230420191630425.png" alt="image-20230420191630425" style="zoom:33%;" />  
 
  
