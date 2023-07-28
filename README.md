@@ -108,3 +108,7 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 12. Cilium GatewayAPI特性 环境搭建以及功能验证
 
        https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/GatewayAPI/Cilium-GatewayAPI.md
+
+13. Cilium BGP ControlPlane特性介绍以及环境搭建和功能验证
+
+       https://github.com/HFfleming/k8s-network-learning/blob/main/cilium-cni/BGP/Cilium-BGP-ControlPlane.md
