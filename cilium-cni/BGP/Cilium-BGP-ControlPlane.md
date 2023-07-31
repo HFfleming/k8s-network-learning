@@ -436,3 +436,425 @@ spec:
    或者 `show ip bgp`
 
    ![image-20230729003540263](./assets/image-20230729003540263.png) 
+
+---
+
+### 五: BGP方案不是万能的
+
+1. Underlay + 三层路由的方案，在传统机房中是非常流行的方案，因为它的性能很好。但是在公有云vpc的场景下，受限使用，不是每个公有云供应商都让用，每一个云厂商对网络保护的定义不一样。Calio的BGP在AWS中可以实现，但是在Azure中不允许，它的VPC不允许不受管控范围的IP通过。
+2. 在BGP场景下，BGP Underlay即使能使用，但无法跨AZ。在公有云中跨AZ一般意味着跨子网，跨子网就意味着跨路由。VPC的 vRouter一般不支持BGP。BGP underlay可以用，也仅限于单az。
+
+
+
+---
+
+### 六: 关于vyos的网关配置
+
+在上面环境搭建步骤汇总 containerLab组网配置vyos的时候，需要配置vyos的网关路由配置，如下:
+
+1. leaf0-boot.cfg
+
+   ```json
+   interfaces {
+       ethernet eth1 {
+           address 10.1.10.1/24
+           duplex auto
+           mtu 9000
+           speed auto
+       }
+       ethernet eth2 {
+           address 10.1.12.1/24
+           duplex auto
+           mtu 9000
+           speed auto
+       }
+       ethernet eth3 {
+           address 10.1.5.1/24
+           duplex auto
+           mtu 9000
+           speed auto
+       }
+       loopback lo {
+       }
+   }
+   nat {
+       source {
+           rule 100 {
+               outbound-interface eth0
+               source {
+                   address 10.1.0.0/16
+               }
+               translation {
+                   address masquerade
+               }
+           }
+       }
+   }
+   protocols {
+       bgp {
+           address-family {
+               ipv4-unicast {
+                   network 10.1.5.0/24 {
+                   }
+                   network 10.1.10.0/24 {
+                   }
+                   network 10.1.12.0/24 {
+                   }
+               }
+           }
+           neighbor 10.1.5.10 {
+               address-family {
+                   ipv4-unicast {
+                       route-reflector-client
+                   }
+               }
+               remote-as 65005
+           }
+           neighbor 10.1.5.11 {
+               address-family {
+                   ipv4-unicast {
+                       route-reflector-client
+                   }
+               }
+               remote-as 65005
+           }
+           neighbor 10.1.10.2 {
+               address-family {
+                   ipv4-unicast {
+                   }
+               }
+               remote-as 500
+           }
+           neighbor 10.1.12.2 {
+               address-family {
+                   ipv4-unicast {
+                   }
+               }
+               remote-as 800
+           }
+           parameters {
+               bestpath {
+                   as-path {
+                       multipath-relax
+                   }
+               }
+               router-id 10.1.5.1
+           }
+           system-as 65005
+       }
+   }
+   system {
+       config-management {
+           commit-revisions 100
+       }
+       console {
+           device ttyS0 {
+               speed 9600
+           }
+       }
+       host-name leaf0
+       login {
+           user vyos {
+               authentication {
+                   encrypted-password $6$QxPS.uk6mfo$9QBSo8u1FkH16gMyAVhus6fU3LOzvLR9Z9.82m3tiHFAxTtIkhaZSWssSgzt4v4dGAL8rhVQxTg0oAG9/q11h/
+                   plaintext-password ""
+               }
+           }
+       }
+       time-zone UTC
+   }
+   
+   
+   // Warning: Do not remove the following line.
+   // vyos-config-version: "bgp@4:broadcast-relay@1:cluster@1:config-management@1:conntrack@3:conntrack-sync@2:container@1:dhcp-relay@2:dhcp-server@6:dhcpv6-server@1:dns-dynamic@1:dns-forwarding@4:firewall@10:flow-accounting@1:https@4:ids@1:interfaces@29:ipoe-server@1:ipsec@12:isis@3:l2tp@4:lldp@1:mdns@1:monitoring@1:nat@5:nat66@1:ntp@2:openconnect@2:ospf@2:policy@5:pppoe-server@6:pptp@2:qos@2:quagga@11:rip@1:rpki@1:salt@1:snmp@3:ssh@2:sstp@4:system@26:vrf@3:vrrp@3:vyos-accel-ppp@2:wanloadbalance@3:webproxy@2"
+   // Release version: 1.4-rolling-202307070317
+   
+   ```
+
+   
+
+2. leaf1-boot.cfg
+
+   ```json
+   interfaces {
+       ethernet eth1 {
+           address 10.1.34.1/24
+           duplex auto
+           mtu 9000
+           speed auto
+       }
+       ethernet eth2 {
+           address 10.1.11.1/24
+           duplex auto
+           mtu 9000
+           speed auto
+       }
+       ethernet eth3 {
+           address 10.1.8.1/24
+           duplex auto
+           mtu 9000
+           speed auto
+       }
+       loopback lo {
+       }
+   }
+   nat {
+       source {
+           rule 100 {
+               outbound-interface eth0
+               source {
+                   address 10.1.0.0/16
+               }
+               translation {
+                   address masquerade
+               }
+           }
+       }
+   }
+   protocols {
+       bgp {
+           address-family {
+               ipv4-unicast {
+                   network 10.1.8.0/24 {
+                   }
+                   network 10.1.10.0/24 {
+                   }
+                   network 10.1.12.0/24 {
+                   }
+               }
+           }
+           neighbor 10.1.8.10 {
+               address-family {
+                   ipv4-unicast {
+                       route-reflector-client
+                   }
+               }
+               remote-as 65008
+           }
+           neighbor 10.1.8.11 {
+               address-family {
+                   ipv4-unicast {
+                       route-reflector-client
+                   }
+               }
+               remote-as 65008
+           }
+           neighbor 10.1.11.2 {
+               address-family {
+                   ipv4-unicast {
+                   }
+               }
+               remote-as 800
+           }
+           neighbor 10.1.34.2 {
+               address-family {
+                   ipv4-unicast {
+                   }
+               }
+               remote-as 500
+           }
+           parameters {
+               bestpath {
+                   as-path {
+                       multipath-relax
+                   }
+               }
+               router-id 10.1.8.1
+           }
+           system-as 65008
+       }
+   }
+   system {
+       config-management {
+           commit-revisions 100
+       }
+       console {
+           device ttyS0 {
+               speed 9600
+           }
+       }
+       host-name leaf1
+       login {
+           user vyos {
+               authentication {
+                   encrypted-password $6$QxPS.uk6mfo$9QBSo8u1FkH16gMyAVhus6fU3LOzvLR9Z9.82m3tiHFAxTtIkhaZSWssSgzt4v4dGAL8rhVQxTg0oAG9/q11h/
+                   plaintext-password ""
+               }
+           }
+       }
+       time-zone UTC
+   }
+   
+   
+   // Warning: Do not remove the following line.
+   // vyos-config-version: "bgp@4:broadcast-relay@1:cluster@1:config-management@1:conntrack@3:conntrack-sync@2:container@1:dhcp-relay@2:dhcp-server@6:dhcpv6-server@1:dns-dynamic@1:dns-forwarding@4:firewall@10:flow-accounting@1:https@4:ids@1:interfaces@29:ipoe-server@1:ipsec@12:isis@3:l2tp@4:lldp@1:mdns@1:monitoring@1:nat@5:nat66@1:ntp@2:openconnect@2:ospf@2:policy@5:pppoe-server@6:pptp@2:qos@2:quagga@11:rip@1:rpki@1:salt@1:snmp@3:ssh@2:sstp@4:system@26:vrf@3:vrrp@3:vyos-accel-ppp@2:wanloadbalance@3:webproxy@2"
+   // Release version: 1.4-rolling-202307070317
+   
+   ```
+
+   
+
+3. spine0-boot.cfg
+
+   ```json
+   interfaces {
+       ethernet eth1 {
+           address 10.1.10.2/24
+           duplex auto
+           speed auto
+       }
+       ethernet eth2 {
+           address 10.1.34.2/24
+           duplex auto
+           speed auto
+       }
+       loopback lo {
+       }
+   }
+   protocols {
+       bgp {
+           address-family {
+               ipv4-unicast {
+                   network 10.1.10.0/24 {
+                   }
+                   network 10.1.34.0/24 {
+                   }
+               }
+           }
+           neighbor 10.1.10.1 {
+               address-family {
+                   ipv4-unicast {
+                   }
+               }
+               remote-as 65005
+           }
+           neighbor 10.1.34.1 {
+               address-family {
+                   ipv4-unicast {
+                   }
+               }
+               remote-as 65008
+           }
+           parameters {
+               bestpath {
+                   as-path {
+                       multipath-relax
+                   }
+               }
+           }
+           system-as 500
+       }
+   }
+   system {
+       config-management {
+           commit-revisions 100
+       }
+       console {
+           device ttyS0 {
+               speed 9600
+           }
+       }
+       host-name spine0
+       login {
+           user vyos {
+               authentication {
+                   encrypted-password $6$QxPS.uk6mfo$9QBSo8u1FkH16gMyAVhus6fU3LOzvLR9Z9.82m3tiHFAxTtIkhaZSWssSgzt4v4dGAL8rhVQxTg0oAG9/q11h/
+                   plaintext-password ""
+               }
+           }
+       }
+       time-zone UTC
+   }
+   
+   
+   // Warning: Do not remove the following line.
+   // vyos-config-version: "bgp@4:broadcast-relay@1:cluster@1:config-management@1:conntrack@3:conntrack-sync@2:container@1:dhcp-relay@2:dhcp-server@6:dhcpv6-server@1:dns-dynamic@1:dns-forwarding@4:firewall@10:flow-accounting@1:https@4:ids@1:interfaces@29:ipoe-server@1:ipsec@12:isis@3:l2tp@4:lldp@1:mdns@1:monitoring@1:nat@5:nat66@1:ntp@2:openconnect@2:ospf@2:policy@5:pppoe-server@6:pptp@2:qos@2:quagga@11:rip@1:rpki@1:salt@1:snmp@3:ssh@2:sstp@4:system@26:vrf@3:vrrp@3:vyos-accel-ppp@2:wanloadbalance@3:webproxy@2"
+   // Release version: 1.4-rolling-202307070317
+   
+   ```
+
+   
+
+4. spine1-boot.cfg
+
+   ```json
+   interfaces {
+       ethernet eth1 {
+           address 10.1.12.2/24
+           duplex auto
+           mtu 9000
+           speed auto
+       }
+       ethernet eth2 {
+           address 10.1.11.2/24
+           duplex auto
+           mtu 9000
+           speed auto
+       }
+       loopback lo {
+       }
+   }
+   protocols {
+       bgp {
+           address-family {
+               ipv4-unicast {
+                   network 10.1.11.0/24 {
+                   }
+                   network 10.1.12.0/24 {
+                   }
+               }
+           }
+           neighbor 10.1.11.1 {
+               address-family {
+                   ipv4-unicast {
+                   }
+               }
+               remote-as 65008
+           }
+           neighbor 10.1.12.1 {
+               address-family {
+                   ipv4-unicast {
+                   }
+               }
+               remote-as 65005
+           }
+           parameters {
+               bestpath {
+                   as-path {
+                       multipath-relax
+                   }
+               }
+               router-id 10.1.8.1
+           }
+           system-as 800
+       }
+   }
+   system {
+       config-management {
+           commit-revisions 100
+       }
+       console {
+           device ttyS0 {
+               speed 9600
+           }
+       }
+       host-name spine1
+       login {
+           user vyos {
+               authentication {
+                   encrypted-password $6$QxPS.uk6mfo$9QBSo8u1FkH16gMyAVhus6fU3LOzvLR9Z9.82m3tiHFAxTtIkhaZSWssSgzt4v4dGAL8rhVQxTg0oAG9/q11h/
+                   plaintext-password ""
+               }
+           }
+       }
+       time-zone UTC
+   }
+   
+   
+   // Warning: Do not remove the following line.
+   // vyos-config-version: "bgp@4:broadcast-relay@1:cluster@1:config-management@1:conntrack@3:conntrack-sync@2:container@1:dhcp-relay@2:dhcp-server@6:dhcpv6-server@1:dns-dynamic@1:dns-forwarding@4:firewall@10:flow-accounting@1:https@4:ids@1:interfaces@29:ipoe-server@1:ipsec@12:isis@3:l2tp@4:lldp@1:mdns@1:monitoring@1:nat@5:nat66@1:ntp@2:openconnect@2:ospf@2:policy@5:pppoe-server@6:pptp@2:qos@2:quagga@11:rip@1:rpki@1:salt@1:snmp@3:ssh@2:sstp@4:system@26:vrf@3:vrrp@3:vyos-accel-ppp@2:wanloadbalance@3:webproxy@2"
+   // Release version: 1.4-rolling-202307070317
+   
+   ```
+
+   
