@@ -454,7 +454,7 @@ spec:
 
 1. leaf0-boot.cfg
 
-   ```json
+   ```yaml
    interfaces {
        ethernet eth1 {
            address 10.1.10.1/24
@@ -575,7 +575,7 @@ spec:
 
 2. leaf1-boot.cfg
 
-   ```json
+   ```yaml
    interfaces {
        ethernet eth1 {
            address 10.1.34.1/24
@@ -696,7 +696,7 @@ spec:
 
 3. spine0-boot.cfg
 
-   ```json
+   ```yaml
    interfaces {
        ethernet eth1 {
            address 10.1.10.2/24
@@ -777,7 +777,7 @@ spec:
 
 4. spine1-boot.cfg
 
-   ```json
+   ```yaml
    interfaces {
        ethernet eth1 {
            address 10.1.12.2/24
