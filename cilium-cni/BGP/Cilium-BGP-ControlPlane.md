@@ -439,7 +439,240 @@ spec:
 
 ---
 
-### 五: BGP方案不是万能的
+### 五: BGP ControlePlane+MetalLB 宣告LBsvc
+
+集群里的服务最终还是需要对外暴露的，仅仅在集群内可访问往往不能满足生产需求。借助metalLB的能力进行LB IP管理，然后通过BGP将LB svc进行宣告。
+
+1. MetalLB环境搭建，采用v0.13版本。
+
+   `kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.10/config/manifests/metallb-native.yaml`
+
+   ![image-20230801151704124](./assets/image-20230801151704124.png)
+
+ 
+
+2.  创建LB IPpool 用于给loadbalancer类型的service分配ip地址
+
+   `metallb-ipadpool.yaml`
+
+   ```yaml
+   apiVersion: metallb.io/v1beta1
+   kind: IPAddressPool
+   metadata:
+     name: first-pool
+     namespace: metallb-system
+   spec:
+     addresses:
+     - 172.18.0.200-172.18.0.210
+   ```
+
+3. 创建LB类型的svc,查看是否分配IP地址
+
+   ```yaml
+   apiVersion: apps/v1
+   kind: DaemonSet
+   metadata:
+     name: appdemo
+     labels:
+       app: appdemo
+   spec:
+     selector:
+       matchLabels:
+         app: appdemo
+     template:
+       metadata:
+         labels:
+           app: appdemo
+       spec:
+         containers:
+         - name: nettool
+           image: burlyluo/nettool
+           securityContext:
+             privileged: true
+   
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: appdemo
+   spec:
+     type: LoadBalancer
+     selector:
+       app: appdemo
+     ports:
+     - name: app
+       port: 8080
+       targetPort: 80
+   ```
+
+   可以看到LB ip地址已经分配
+
+   ![image-20230801153001935](./assets/image-20230801153001935.png) 
+
+   测试访问效果，发现无法在集群外访问该LB ip地址。
+
+   ![image-20230801153853594](./assets/image-20230801153853594.png)
+
+   原因很简单，还没进行service的宣告发布。
+
+   
+
+4. service announcements 服务宣告
+
+   默认情况下，Virtual routers不会发布服务。不过Virtual routers 可以通过serviceSelector 进行svc匹配，然后将匹配到的任何svc的LB IP进行宣告
+
+   将上述步骤创建的`CiliumBGPPeeringPolicy`cr资源进行修改，添加`serviceSelector`
+
+   ```shell
+   cat <<EOF | kubectl apply -f -
+   ---
+   apiVersion: "cilium.io/v2alpha1"
+   kind: CiliumBGPPeeringPolicy
+   metadata:
+     name: rack0
+   spec:
+     nodeSelector:
+       matchLabels:
+         rack: rack0
+     virtualRouters:
+     - localASN: 65005
+       exportPodCIDR: true
+       neighbors:
+       - peerAddress: "10.1.5.1/24"
+         peerASN: 65005
+       serviceSelector:
+         matchExpressions:
+           - {key: app, operator: NotIn, values: ["test"]}
+        
+   ---
+   apiVersion: "cilium.io/v2alpha1"
+   kind: CiliumBGPPeeringPolicy
+   metadata:
+     name: rack1
+   spec:
+     nodeSelector:
+       matchLabels:
+         rack: rack1
+     virtualRouters:
+     - localASN: 65008
+       exportPodCIDR: true
+       neighbors:
+       - peerAddress: "10.1.8.1/24"
+         peerASN: 65008
+       serviceSelector:
+         matchExpressions:
+           - {key: app, operator: NotIn, values: ["test"]}
+   EOF
+   
+   ```
+
+   即添加:`serviceSelector.matchExpressions=[xxx]` ;该配置表示除了带有app:test 标签的service，其余的svc的LB地址均会被BGP路由发布
+
+   
+
+5. 访问测试
+
+   访问成功，集群内外都可通过LB地址进行访问
+
+   ![image-20230801162016995](./assets/image-20230801162016995.png) 
+
+   
+
+   查看客户端的路由规则:
+
+   可以看到对应LB IP的路由规则已经通过BGP协议学习到了
+
+   ![image-20230801162410990](./assets/image-20230801162410990.png) 
+
+---
+
+### 六: BGP ControlPlane + LB IPAM 宣告LB svc
+
+Cilium 本身也支持service LB地址的分配管理，除了MetalLB的方案外，还可以使用IPAM的特性完成service的宣告
+
+1. 清理metalLB环境
+
+2. 创建`CiliumLoadBalancerIPPool` 定义IP地址池
+
+   ```yaml
+   apiVersion: "cilium.io/v2alpha1"
+   kind: CiliumLoadBalancerIPPool
+   metadata:
+     name: "red-pool"
+   spec:
+     cidrs:
+     - cidr: "30.0.10.0/24"
+     serviceSelector:
+       matchLabels:
+         color: red
+   ```
+
+   注意`serviceSelector`字段，表示该ip池只对指定svc生效
+
+3. 创建deomo服务
+
+   ```yaml
+   apiVersion: apps/v1
+   kind: DaemonSet
+   metadata:
+     name: appdemo
+     labels:
+       app: appdemo
+   spec:
+     selector:
+       matchLabels:
+         app: appdemo
+     template:
+       metadata:
+         labels:
+           app: appdemo
+       spec:
+         containers:
+         - name: nettool
+           image: burlyluo/nettool
+           securityContext:
+             privileged: true
+   
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: appdemo
+     labels:
+       color: red
+   spec:
+     type: LoadBalancer
+     selector:
+       app: appdemo
+     ports:
+     - name: app
+       port: 8080
+       targetPort: 80
+   ```
+
+   服务创建成功，LB ip地址已经分配
+
+   ![image-20230801165331807](./assets/image-20230801165331807.png) 
+
+4. 由于上述步骤已经创建`CiliumBGPPeeringPolicy` 资源配置，无需重复创建，复用即可
+
+5. 访问测试
+
+   测试发现，无论集群内外均可访问该svc的LB ip地址
+
+   ![image-20230801170110292](./assets/image-20230801170110292.png)
+
+   
+
+   查看外部节点的路由规则:
+
+   可以看到对应服务的ip地址已经在该节点的路由表中，前面B表示，通过BGP学习而来的
+
+   ![image-20230801170322704](./assets/image-20230801170322704.png)
+
+---
+
+### 七: BGP方案不是万能的
 
 1. Underlay + 三层路由的方案，在传统机房中是非常流行的方案，因为它的性能很好。但是在公有云vpc的场景下，受限使用，不是每个公有云供应商都让用，每一个云厂商对网络保护的定义不一样。Calio的BGP在AWS中可以实现，但是在Azure中不允许，它的VPC不允许不受管控范围的IP通过。
 2. 在BGP场景下，BGP Underlay即使能使用，但无法跨AZ。在公有云中跨AZ一般意味着跨子网，跨子网就意味着跨路由。VPC的 vRouter一般不支持BGP。BGP underlay可以用，也仅限于单az。
@@ -448,7 +681,7 @@ spec:
 
 ---
 
-### 六: 关于vyos的网关配置
+### 八: 关于vyos的网关配置
 
 在上面环境搭建步骤汇总 containerLab组网配置vyos的时候，需要配置vyos的网关路由配置，如下:
 
@@ -858,3 +1091,4 @@ spec:
    ```
 
    
+
