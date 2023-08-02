@@ -1,7 +1,7 @@
 # k8s-network-learning
-kubernetes容器网络学习，本文档将会记录从第一步搭建环境，到cilium，flannel，calico 等网络模型的学习
+kubernetes容器网络学习，本文档将会记录从第一步搭建环境，到cilium，flannel，calico 等网络模型的学习 
 
-![image-20230802141655030](./assets/image-20230802141655030.png) 
+![image-20230802142733591](./assets/image-20230802142733591.png)
 
 ---
 
