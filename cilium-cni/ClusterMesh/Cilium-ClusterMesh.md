@@ -74,74 +74,295 @@ Cilium 控制面基于etcd设计，尽可能保持设计简单
    ```shell
    #!/bin/bash
    set -v
-   # exec &>./cluster1-install-log-rec.txt
    date
-   # create a cluster with the local registry enabled in containerd
-   cat <<EOF | kind create cluster --name=cluster1 --image=kindest/node:v1.23.4 --config=-
+   
+   # 1. prep noCNI env
+   cat <<EOF | kind create cluster --name=cluster1 --image=kindest/node:v1.27.3 --config=-
    kind: Cluster
    apiVersion: kind.x-k8s.io/v1alpha4
    networking:
-           disableDefaultCNI: true
-           podSubnet: "10.10.0.0/16"
-           serviceSubnet: "10.11.0.0/16"
+     disableDefaultCNI: true
+     podSubnet: "10.10.0.0/16"
+     serviceSubnet: "10.11.0.0/16"
    
    nodes:
-           - role: control-plane
-           - role: worker
+     - role: control-plane
+     - role: worker
+     - role: worker
+   
    EOF
    
-   # prep the environment
-   controller_node=$(kubectl get nodes --no-headers  -o custom-columns=NAME:.metadata.name| grep control-plane)
-   kubectl taint nodes $controller_node node-role.kubernetes.io/master:NoSchedule-
-   kubectl get nodes -owide
-   kubectl get pods -owide -A
+   # 2. remove taints
+   controller_node_ip=`kubectl get node -o wide --no-headers | grep -E "control-plane" | awk -F " " '{print $6}'`
+   kubectl taint nodes $(kubectl get nodes -o name | grep control-plane) node-role.kubernetes.io/control-plane:NoSchedule-
+   kubectl get nodes -o wide
    
-   # install CNI
-   cilium install --context kind-cluster1 --version v1.12.0 --helm-set ipam.mode=kubernetes,cluster.name=cluster1,cluster.id=1
+   # 3. install CNI
+   cilium install --context kind-cluster1 --version 1.14.0-rc.0  \
+   --helm-set ipam.mode=kubernetes,cluster.name=cluster1,cluster.id=1
    cilium status  --context kind-cluster1 --wait
    ```
 
    cluster1 安装完成: 默认是vxlan模式
 
-   ![image-20230803221513624](./assets/image-20230803221513624.png) 
+   ![image-20230804162810292](./assets/image-20230804162810292.png)  
 
    
 
-   `2-setup-cilium-clustermesh2.sh`安装cluster2:
-
-   `--inherit-ca kind-cluster1` 关键配置，继承cluster1的ca证书
+   `2-setup-cilium-clustermesh2.sh`安装cluster2: 关键配置，第三步继承cluster1的cilium-ca证书
 
    ```shell
    #!/bin/bash
    set -v
-   # exec &>./cluster2-install-log-rec.txt
    date
    
-   # create a cluster with the local registry enabled in containerd
-   cat <<EOF | kind create cluster --name=cluster2 --image=kindest/node:v1.23.4 --config=-
+   # 1. prep noCNI env
+   cat <<EOF | kind create cluster --name=cluster2 --image=kindest/node:v1.27.3 --config=-
    kind: Cluster
    apiVersion: kind.x-k8s.io/v1alpha4
    networking:
-           disableDefaultCNI: true
-           podSubnet: "10.20.0.0/16"
-           serviceSubnet: "10.21.0.0/16"
+     disableDefaultCNI: true
+     podSubnet: "10.20.0.0/16"
+     serviceSubnet: "10.21.0.0/16"
    
    nodes:
-           - role: control-plane
-           - role: worker
-   
+     - role: control-plane
+     - role: worker
+     - role: worker
    EOF
    
-   # prep the environment
-   controller_node=$(kubectl get nodes --no-headers  -o custom-columns=NAME:.metadata.name| grep control-plane)
-   kubectl taint nodes $controller_node node-role.kubernetes.io/master:NoSchedule-
-   kubectl get nodes -owide -A
+   # 2. remove taints
+   controller_node_ip=`kubectl get node -o wide --no-headers | grep -E "control-plane" | awk -F " " '{print $6}'`
+   kubectl taint nodes $(kubectl get nodes -o name | grep control-plane) node-role.kubernetes.io/control-plane:NoSchedule-
+   kubectl get nodes -o wide
    
-   # install CNI
-   cilium install --context kind-cluster2 --version v1.12.0 --helm-set ipam.mode=kubernetes,cluster.name=cluster2,cluster.id=2 --inherit-ca kind-cluster1
+   # 3. Shared Certificate Authority
+   kubectl --context=kind-cluster1 get secret -n kube-system cilium-ca -o yaml | kubectl --context kind-cluster2 create -f -
+   
+   # 4. install CNI
+   cilium install --context kind-cluster2 --version 1.14.0-rc.0  \
+   --helm-set ipam.mode=kubernetes,cluster.name=cluster2,cluster.id=2
    cilium status  --context kind-cluster2 --wait
    ```
-
    
-
+   ![image-20230804163526688](./assets/image-20230804163526688.png) 
    
+   **⚠️：如果在安装第二个集群出现报错:**
+   
+   ![image-20230804164631022](./assets/image-20230804164631022.png) 
+   
+   查看安装集群失败日志，kubelet的日志发现: `too many open files`
+   
+   如何查看kubelet日志,在安装命令中配置
+   
+   `kind create cluster --name cl1 --config multi.yaml --retain
+   kind export logs --name cl1`
+   
+   ![image-20230804164807720](./assets/image-20230804164807720.png) 
+   
+   解决方式: 在当前主机上执行如下命令:
+   
+   临时方式(重启失效)：
+   
+   `sudo sysctl fs.inotify.max_user_watches=524288  `
+   
+   `sudo sysctl fs.inotify.max_user_instances=512`
+   
+   永久方式: `/etc/sysctl.conf`
+   
+   `fs.inotify.max_user_watches = 524288`
+   
+   `fs.inotify.max_user_instances = 512`
+   
+   原因: 这可能是由于 inotify 资源耗尽造成的。资源限制由 fs.inotify.max_user_watches 和 fs.inotify.max_user_instances 系统变量定义。例如，在 Ubuntu 中，这些默认值分别为 8192 和 128，这不足以创建具有多个节点的集群。
+   
+   
+   
+   如下图所示: 两个集群均已就绪
+   
+   ![image-20230804171239586](./assets/image-20230804171239586.png)
+
+
+
+2. 集群互联成网格 `3-enable-cilium-servicemesh.sh`
+
+   ```shell
+   #!/bin/bash
+   set -v
+   #exec &> ./clustermesh-connect-log-rec.log
+   date
+   
+   cilium clustermesh enable --context kind-cluster1 --service-type NodePort
+   cilium clustermesh enable --context kind-cluster2 --service-type NodePort
+   
+   cilium clustermesh connect --context kind-cluster1 --destination-context kind-cluster2
+   
+   cilium clustermesh status  --context kind-cluster1 --wait
+   ```
+
+   执行脚本，集群互联成功
+
+   ![image-20230804172303052](./assets/image-20230804172303052.png)
+
+   clustermesh 互联是通过nodeport svc实现的，（更好的方式可以采用LoadBalencer）
+
+   ![image-20230804173646506](./assets/image-20230804173646506.png)
+
+
+
+3. 创建业务进行测试`4-clustermesh-verify.sh `
+
+   ```shell
+   #/bin/bash
+   set -v
+   
+   # wget https://raw.githubusercontent.com/cilium/cilium/1.11.2/examples/kubernetes/clustermesh/global-service-example/cluster1.yaml
+   # wget https://raw.githubusercontent.com/cilium/cilium/1.11.2/examples/kubernetes/clustermesh/global-service-example/cluster2.yaml
+   
+   kubectl apply -f ./cluster1.yaml --context kind-cluster1
+   kubectl apply -f ./cluster2.yaml --context kind-cluster2
+   
+   kubectl wait --for=condition=Ready=true pods --all --context kind-cluster1
+   kubectl wait --for=condition=Ready=true pods --all --context kind-cluster2
+   ```
+
+   Cluser1.yaml 如下所示:
+
+   ```yaml
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: rebel-base
+     annotations:
+       io.cilium/global-service: "true"
+   spec:
+     type: ClusterIP
+     ports:
+     - port: 80
+     selector:
+       name: rebel-base
+   ---
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: rebel-base
+   spec:
+     selector:
+       matchLabels:
+         name: rebel-base
+     replicas: 2
+     template:
+       metadata:
+         labels:
+           name: rebel-base
+       spec:
+         containers:
+         - name: rebel-base
+           image: nginx:1.15.8
+           volumeMounts:
+             - name: html
+               mountPath: /usr/share/nginx/html/
+           livenessProbe:
+             httpGet:
+               path: /
+               port: 80
+             periodSeconds: 1
+           readinessProbe:
+             httpGet:
+               path: /
+               port: 80
+         volumes:
+           - name: html
+             configMap:
+               name: rebel-base-response
+               items:
+                 - key: message
+                   path: index.html
+   ---
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: rebel-base-response
+   data:
+     message: "{\"Galaxy\": \"Alderaan\", \"Cluster\": \"Cluster-1\"}\n"
+   ```
+
+   Cluster2.yaml
+
+   ```yaml
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: rebel-base
+     annotations:
+       io.cilium/global-service: "true"
+   spec:
+     type: ClusterIP
+     ports:
+     - port: 80
+     selector:
+       name: rebel-base
+   ---
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: rebel-base
+   spec:
+     selector:
+       matchLabels:
+         name: rebel-base
+     replicas: 2
+     template:
+       metadata:
+         labels:
+           name: rebel-base
+       spec:
+         containers:
+         - name: rebel-base
+           image: nginx:1.15.8
+           volumeMounts:
+             - name: html
+               mountPath: /usr/share/nginx/html/
+           livenessProbe:
+             httpGet:
+               path: /
+               port: 80
+             periodSeconds: 1
+           readinessProbe:
+             httpGet:
+               path: /
+               port: 80
+         volumes:
+           - name: html
+             configMap:
+               name: rebel-base-response
+               items:
+                 - key: message
+                   path: index.html
+   ---
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: rebel-base-response
+   data:
+     message: "{\"Galaxy\": \"Alderaan\", \"Cluster\": \"Cluster-2\"}\n"
+   ```
+
+    
+
+   `for i in $(seq 1 10);do kubectl --context kind-cluster1 exec -ti deployment/x-wing -- curl rebel-base;done`
+
+   ![image-20230804190813544](./assets/image-20230804190813544.png)
+
+   将集群2中对应服务的后端缩容成0:
+
+   `kubectl --context kind-cluster2 scale deployment rebel-base --replicas=0 `
+
+   再次访问:
+
+    `for i in $(seq 1 10);do kubectl --context kind-cluster1 exec -ti deployment/x-wing -- curl rebel-base;done `
+
+   ![ ](./assets/image-20230804191305975.png) 
+
