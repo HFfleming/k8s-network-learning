@@ -208,16 +208,29 @@ Cilium 控制面基于etcd设计，尽可能保持设计简单
 
    ![image-20230804173646506](./assets/image-20230804173646506.png)
 
+   
+
+   ⚠️如果节点重启过，集群互联状态可能会失效，需要重新执行该脚本。(本人kind节点关机休眠后，第二天测试global svc的时候，发现无法跨集群访问，执行该脚本恢复)
 
 
-3. 创建业务进行测试`4-clustermesh-verify.sh `
+
+---
+
+### 四: Load-balancing with Global Services
+
+通过在每个集群中定义具有相同name和namespace的 Kubernetes service并添加注解` service.cilium.io/global: "true" `将其声明为全局来实现集群之间建立负载均衡。 Cilium 将自动对两个集群中的 pod 执行负载均衡。
+
+![image-20230805174907444](./assets/image-20230805174907444.png) 
+
+1. 创建业务进行测试`4-clustermesh-verify.sh `
 
    ```shell
    #/bin/bash
    set -v
    
-   # wget https://raw.githubusercontent.com/cilium/cilium/1.11.2/examples/kubernetes/clustermesh/global-service-example/cluster1.yaml
-   # wget https://raw.githubusercontent.com/cilium/cilium/1.11.2/examples/kubernetes/clustermesh/global-service-example/cluster2.yaml
+   wget https://raw.githubusercontent.com/cilium/cilium/1.14.0/examples/kubernetes/clustermesh/global-service-example/cluster1.yaml
+   
+   wget https://raw.githubusercontent.com/cilium/cilium/1.14.0/examples/kubernetes/clustermesh/global-service-example/cluster2.yaml
    
    kubectl apply -f ./cluster1.yaml --context kind-cluster1
    kubectl apply -f ./cluster2.yaml --context kind-cluster2
@@ -226,131 +239,9 @@ Cilium 控制面基于etcd设计，尽可能保持设计简单
    kubectl wait --for=condition=Ready=true pods --all --context kind-cluster2
    ```
 
-   Cluser1.yaml 如下所示:
+   
 
-   ```yaml
-   ---
-   apiVersion: v1
-   kind: Service
-   metadata:
-     name: rebel-base
-     annotations:
-       io.cilium/global-service: "true"
-   spec:
-     type: ClusterIP
-     ports:
-     - port: 80
-     selector:
-       name: rebel-base
-   ---
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: rebel-base
-   spec:
-     selector:
-       matchLabels:
-         name: rebel-base
-     replicas: 2
-     template:
-       metadata:
-         labels:
-           name: rebel-base
-       spec:
-         containers:
-         - name: rebel-base
-           image: nginx:1.15.8
-           volumeMounts:
-             - name: html
-               mountPath: /usr/share/nginx/html/
-           livenessProbe:
-             httpGet:
-               path: /
-               port: 80
-             periodSeconds: 1
-           readinessProbe:
-             httpGet:
-               path: /
-               port: 80
-         volumes:
-           - name: html
-             configMap:
-               name: rebel-base-response
-               items:
-                 - key: message
-                   path: index.html
-   ---
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: rebel-base-response
-   data:
-     message: "{\"Galaxy\": \"Alderaan\", \"Cluster\": \"Cluster-1\"}\n"
-   ```
-
-   Cluster2.yaml
-
-   ```yaml
-   ---
-   apiVersion: v1
-   kind: Service
-   metadata:
-     name: rebel-base
-     annotations:
-       io.cilium/global-service: "true"
-   spec:
-     type: ClusterIP
-     ports:
-     - port: 80
-     selector:
-       name: rebel-base
-   ---
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: rebel-base
-   spec:
-     selector:
-       matchLabels:
-         name: rebel-base
-     replicas: 2
-     template:
-       metadata:
-         labels:
-           name: rebel-base
-       spec:
-         containers:
-         - name: rebel-base
-           image: nginx:1.15.8
-           volumeMounts:
-             - name: html
-               mountPath: /usr/share/nginx/html/
-           livenessProbe:
-             httpGet:
-               path: /
-               port: 80
-             periodSeconds: 1
-           readinessProbe:
-             httpGet:
-               path: /
-               port: 80
-         volumes:
-           - name: html
-             configMap:
-               name: rebel-base-response
-               items:
-                 - key: message
-                   path: index.html
-   ---
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: rebel-base-response
-   data:
-     message: "{\"Galaxy\": \"Alderaan\", \"Cluster\": \"Cluster-2\"}\n"
-   ```
-
-    
+2. 访问测试
 
    `for i in $(seq 1 10);do kubectl --context kind-cluster1 exec -ti deployment/x-wing -- curl rebel-base;done`
 
@@ -365,4 +256,74 @@ Cilium 控制面基于etcd设计，尽可能保持设计简单
     `for i in $(seq 1 10);do kubectl --context kind-cluster1 exec -ti deployment/x-wing -- curl rebel-base;done `
 
    ![ ](./assets/image-20230804191305975.png) 
+
+3. 如果需要取消全局负载均衡，可通过`service.cilium.io/shared="false"` 注解实现,该注解模式是true
+
+   修改cluster1中的svc，`kubectl --context kind-cluster1 annotate service rebel-base service.cilium.io/shared="false" --overwrite`
+
+   ![image-20230805211250711](./assets/image-20230805211250711.png) 
+
+4.  移除该注解`kubectl annotate service rebel-base service.cilium.io/shared-`,方便后续特性测试
+
+---
+
+### 五: Service Affinity 服务亲和
+
+在某些情况下，跨多个集群的负载均衡可能并不理想。 通过注解 `service.cilium.io/affinity: "local|remote|none" `可用于指定负载示例的目的地。
+
+例如，如果注释 `service.cilium.io/affinity: local `，则将在健康的本地集群内后端实例之间进行负载平衡，并且当且仅当所有本地后端实例都不可用或不健康时，才会负载到远程实例。
+
+
+
+1. 给cluster1 中的svc 添加`service.cilium.io/affinity: local`
+
+   `kubectl annotate service rebel-base service.cilium.io/affinity=local --overwrite `
+
+   ![image-20230805213350160](./assets/image-20230805213350160.png)
+
+   在cluser1中访问该服务
+
+   `for i in $(seq 1 10);do kubectl --context kind-cluster1 exec -ti deployment/x-wing -- curl rebel-base;done`
+
+   可以发现,流量仅会发往cluster1的后端实例
+
+   ![image-20230805213704861](./assets/image-20230805213704861.png)
+
+   在cluster2中访问服务
+
+   `for i in $(seq 1 10);do kubectl --context kind-cluster2 exec -ti deployment/x-wing -- curl rebel-base;done `
+
+   可以发现，流量会负载均衡到cluster1和cluster2的后端实例上
+
+   ![image-20230805213754750](./assets/image-20230805213754750.png)
+
+   查看cluster1中的配置
+
+   `kubectl --context kind-cluster1 exec -n kube-system -ti ds/cilium -- cilium service list --clustermesh-affinity`
+
+   ![image-20230805214515277](./assets/image-20230805214515277.png)
+
+
+
+2. 将cluster1的目标服务svc注解从local设为remote
+
+   `kubectl --context kind-cluster1 annotate service rebel-base service.cilium.io/affinity=remote --overwrite`	
+
+   ![image-20230805215044334](./assets/image-20230805215044334.png)
+
+   在cluster1中进行访问测试:
+
+   `for i in $(seq 1 10);do kubectl --context kind-cluster1 exec -ti deployment/x-wing -- curl rebel-base;done`
+
+   可以发现，响应全都来自 cluster2的后端实例
+
+   ![image-20230805215213797](./assets/image-20230805215213797.png) 
+
+   查看cilium agent配置发现，访问策略已经是远端实例优先了
+
+   ![image-20230805215358867](./assets/image-20230805215358867.png) 
+
+ 
+
+
 
