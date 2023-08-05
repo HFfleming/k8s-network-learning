@@ -63,7 +63,7 @@ Cilium 控制面基于etcd设计，尽可能保持设计简单
 
 ### 三: Cilium ClusterMesh 环境搭建
 
-1. 搭建集群环境,集群版本为1.23，cilium 版本是1.12
+1. 搭建集群环境,集群版本为1.27，cilium 版本是1.14
 
    `1-setup-cilium-clustermesh1.sh`
 
