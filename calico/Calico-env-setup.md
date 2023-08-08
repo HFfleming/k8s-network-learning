@@ -144,4 +144,7 @@ IP 池资源 (IPPool) 表示 Calico 期望从中分配pod IP 的 IP 地址集合
 
 ---
 
-### 
+### 四: 补充
+
+后面的章节会陆续补充，ipip模式下的crossnode，crosssubnets，vxlan模式下的crossnode，crosssubnets，以及BGP的fullmesh BGP的rr
+
