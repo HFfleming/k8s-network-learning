@@ -130,3 +130,7 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 2. Calico 基础环境搭建
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/calico/Calico-env-setup.md
+
+3. Calico 同节点pod是如何进行通信的
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/calico/Calico-Communication-withSameNode.md
