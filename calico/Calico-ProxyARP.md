@@ -29,7 +29,7 @@ Calico利用了网卡的proxy_arp功能，具体的，是将/proc/sys/net/ipv4/c
 
 例如要实现一个 自定义ns1中设备通过proxyARP访问外网，我们分解下步骤:
 
-[1. 创建vethpari（userNS <==> rootNS）; 2.userNS中配置routing table ; 3.rootNS中的vethpair 设备对开启proxyARP ; 4.出网需要配置snat]
+[1. 创建vethpari（userNS <==> rootNS）; 2.userNS中配置routing table ; 3.rootNS中的vethpair 设备对开启proxyARP ; 4.出网需要配置snat ]
 
 
 
@@ -45,7 +45,7 @@ Calico利用了网卡的proxy_arp功能，具体的，是将/proc/sys/net/ipv4/c
    
    ```
 
-   ![image-20230810225645822](./assets/image-20230810225645822.png) 
+    ![image-20230811001904586](./assets/image-20230811001904586.png) 
 
 2. 创建路由表
 
@@ -54,7 +54,7 @@ Calico利用了网卡的proxy_arp功能，具体的，是将/proc/sys/net/ipv4/c
    ip netns exec ns1 ip route add default via 169.254.1.1 dev c-eth0
    ```
 
-   ![image-20230810230004038](./assets/image-20230810230004038.png)
+   ![image-20230811001933111](./assets/image-20230811001933111.png) 
 
    ⚠️: 路由表的添加顺序一定不要错，否则添加失败。需要先告诉网关地址怎么走，然后才能添加默认路由 
 
@@ -64,14 +64,60 @@ Calico利用了网卡的proxy_arp功能，具体的，是将/proc/sys/net/ipv4/c
 
    `1` 表示成功开启proxyARP
 
-   ![image-20230810230428444](./assets/image-20230810230428444.png)
+   ![image-20230811002019813](./assets/image-20230811002019813.png) 
 
    可以在userNS中 arping 169.254.1.1 看看回复的MAC地址是不是veth网卡的 
 
-4. 配置snat
-
-   ```
-   iptables -t nat -A POSTROUTING -s 1.1.0.0/16  -j MASQUERADE
-   ```
+   ![image-20230811002053837](./assets/image-20230811002053837.png) 
 
    
+
+   查看rootNS中的veth网卡MAC地址:
+
+   ![image-20230811002242990](./assets/image-20230811002242990.png) 
+
+   完全一致
+
+   
+
+4. 如果想在userNS 中访问rootNS中的网卡
+
+   需要在rootNS中添加回城路由，如果不添加，数据包传输出来就没法回去了。
+
+   ```bash
+   ip route add 1.1.1.0/24 dev veth scope link
+   ```
+
+   ![image-20230811002845540](./assets/image-20230811002845540.png) 
+
+   
+
+5. 如果需要访问外网则要配置snat
+
+   ```
+   iptables -t nat -A POSTROUTING -s 1.1.1.0/24 -j MASQUERADE
+   ```
+
+   ![image-20230811003241694](./assets/image-20230811003241694.png) 
+
+   
+
+   
+
+### 三: 备注
+
+```tex
+在手动添加路由的时候: ip route add 169.254.1.1 dev c-eth0 scope link
+
+其中一个重要参数是"scope"（作用域），它指定适用于路由表条目的网络范围。该参数可以设置为数值或者从"/etc/iproute2/rt_scopes"文件中获取的字符串。下面是几个常见的作用域类型
+
+scope global：全局范围，适用于所有通过网关进行路由的单播流量。
+scope link：链路范围，适用于直接相连的子网或广播域上的单播和广播数据包。
+scope host：主机范围，适用于本地计算机上的本地接口流量。
+如果路由表条目未指定作用域，则默认情况下，iproute2工具将使用以下作用域：
+
+对于通过网关进行路由的单播流量，默认使用全局作用域(global)。
+对于直接相连的子网或广播域上的流量，默认使用链路作用域(link)。
+对于本地计算机上的本地接口流量，默认使用主机作用域(host)。
+```
+
