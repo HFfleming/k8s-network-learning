@@ -137,4 +137,8 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 
 4. Calico 中的proxyARP说明，以及手工实现proxyARP
 
-   https://github.com/HFfleming/k8s-network-learning/blob/main/calico/Calico-ProxyARP
+   https://github.com/HFfleming/k8s-network-learning/blob/main/calico/Calico-ProxyARP.md
+
+5. Calico ipip模式(always)下的crossNode通信
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/calico/Calico-ipip-CrossNode.md
