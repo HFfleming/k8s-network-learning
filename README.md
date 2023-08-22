@@ -146,3 +146,7 @@ kubernetes容器网络学习，本文档将会记录从第一步搭建环境，�
 6. Calico ipip 模式下的CrossSubnet通信规则
 
    https://github.com/HFfleming/k8s-network-learning/blob/main/calico/Calico-ipip-CrossSubnet.md
+
+7. Calico BGP FullMesh模式分析
+
+   https://github.com/HFfleming/k8s-network-learning/blob/main/calico/Calico-BGP-FullMesh.md
