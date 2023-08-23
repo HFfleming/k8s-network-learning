@@ -123,11 +123,6 @@ clab关键脚本如下: 2-setup-clab.sh
 #!/bin/bash
 set -v
 
-brctl addbr br-leaf0
-ifconfig br-leaf0 up
-
-brctl addbr br-leaf1
-ifconfig br-leaf1 up
 
 cat <<EOF>clab.yaml | clab deploy -t clab.yaml -
 name: calico-bgp-rr
@@ -575,7 +570,7 @@ calicoctl patch bgpconfig default --patch \
 
 spine0-boot.cfg如下:
 
-```json
+```bash
 interfaces {
     ethernet eth1 {
         address 10.1.10.2/24
@@ -656,7 +651,7 @@ system {
 
 spine1-boot.cfg 如下:
 
-```json
+```bash
 interfaces {
     ethernet eth1 {
         address 10.1.12.2/24
@@ -737,7 +732,7 @@ system {
 
 leaf0-boot.cfg 如下:
 
-```json
+```bash
 interfaces {
     ethernet eth1 {
         address 10.1.10.1/24
@@ -864,7 +859,7 @@ system {
 
 leaf1-boot.cfg 如下:
 
-```json
+```bash
 interfaces {
     ethernet eth1 {
         address 10.1.34.1/24
